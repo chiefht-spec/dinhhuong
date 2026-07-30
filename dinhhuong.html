@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trò Chơi Thám Tử Toán Học</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Special+Elite&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a2e; /* Dark vintage background */
+            background-image: radial-gradient(#2a2a4a 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+        
+        h1, h2, .detective-font {
+            font-family: 'Special Elite', cursive;
+        }
+
+        .story-text {
+            font-family: 'Lora', serif;
+        }
+
+        .case-file {
+            background-color: #f4ecd8;
+            color: #2d3748;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            background-image: url('https://www.transparenttextures.com/patterns/cream-paper.png');
+            border: 1px solid #d2b48c;
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        /* Math fractions styling */
+        .frac {
+            display: inline-block;
+            position: relative;
+            vertical-align: middle;
+            letter-spacing: 0.001em;
+            text-align: center;
+            font-size: 0.9em;
+            padding: 0 0.2em;
+        }
+        .frac > span {
+            display: block;
+            padding: 0.1em;
+        }
+        .frac span.bottom {
+            border-top: thin solid black;
+        }
+        .frac span.symbol {
+            display: none;
+        }
+        .option-btn .frac span.bottom {
+            border-top: thin solid #4a5568;
+        }
+        .option-btn:hover .frac span.bottom {
+            border-top-color: currentColor;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .option-btn {
+            transition: all 0.2s;
+        }
+        .option-btn:hover:not(:disabled) {
+            transform: translateX(5px);
+            background-color: #e2e8f0;
+            border-color: #4a5568;
+        }
+        .option-btn.selected {
+            background-color: #cbd5e1;
+            border-color: #475569;
+        }
+        .option-btn.correct {
+            background-color: #dcfce7;
+            border-color: #22c55e;
+            color: #166534;
+        }
+        .option-btn.wrong {
+            background-color: #fee2e2;
+            border-color: #ef4444;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center py-8 px-4 sm:px-8">
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="max-w-3xl w-full text-center case-file p-8 sm:p-12 rounded-lg mt-10">
+        <div class="text-6xl mb-6">🕵️‍♂️</div>
+        <h1 class="text-4xl sm:text-5xl font-bold mb-4 text-gray-900">HỒ SƠ VỤ ÁN: TOÁN 6</h1>
+        <p class="text-xl story-text italic text-gray-700 mb-8">Một tổ chức tội phạm vừa đánh cắp viên kim cương lớn nhất thành phố. Chúng để lại những dấu vết là các câu đố Toán học. Đặc vụ, bạn có sẵn sàng giải mã manh mối để tóm gọn băng đảng này?</p>
+        <div class="bg-gray-200 p-4 rounded text-left mb-8 text-gray-700 story-text border-l-4 border-gray-600">
+            <strong>Nhiệm vụ:</strong> Có 15 manh mối cần giải quyết.<br>
+            <strong>Cơ chế:</strong> Nếu giải mã sai một manh mối, hiện trường sẽ bị thay đổi (số liệu khác) và bạn phải giải mã lại. Trả lời sai sẽ bị trừ điểm đánh giá.<br>
+            <strong>Phân loại:</strong> Điểm số cuối cùng sẽ quyết định Cấp bậc Thám tử của bạn.
+        </div>
+        <button onclick="startGame()" class="bg-gray-900 text-white px-8 py-4 rounded text-xl font-bold hover:bg-gray-700 transition shadow-lg detective-font">NHẬN NHIỆM VỤ</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="max-w-4xl w-full hidden">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-center bg-gray-800 p-4 rounded-t-lg border-b-4 border-gray-600">
+            <div class="detective-font text-xl text-white tracking-widest">HỒ SƠ: <span id="progress" class="text-yellow-400">1/15</span></div>
+            <div class="detective-font text-xl text-white tracking-widest">ĐIỂM: <span id="score" class="text-green-400">150</span></div>
+        </div>
+
+        <!-- Case File Content -->
+        <div class="case-file p-6 sm:p-10 rounded-b-lg relative overflow-hidden">
+            <!-- Top secret stamp -->
+            <div class="absolute top-4 right-4 border-4 border-red-600 text-red-600 text-2xl font-bold p-2 transform rotate-12 opacity-30 detective-font pointer-events-none">TOP SECRET</div>
+            
+            <div id="question-container">
+                <h2 id="question-title" class="text-2xl font-bold mb-2 text-gray-800 mt-4">Manh mối #1</h2>
+                <div class="h-px bg-gray-400 w-full mb-6"></div>
+                
+                <div id="story-context" class="mb-4 text-gray-700 italic story-text text-lg"></div>
+                <div id="question-text" class="text-xl text-gray-900 mb-8 font-medium leading-relaxed story-text pl-8 relative">
+                    <!-- Text sẽ được JS chèn vào -->
+                </div>
+                
+                <div id="options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+                    <!-- Nút đáp án hoặc ô điền khuyết sẽ xuất hiện ở đây -->
+                </div>
+
+                <div id="feedback-area" class="mt-8 hidden border-t-2 border-dashed border-gray-400 pt-6">
+                    <p id="feedback-text" class="text-lg font-bold mb-4"></p>
+                    <button id="next-btn" onclick="nextAction()" class="bg-gray-800 text-white px-6 py-2 rounded hover:bg-gray-700 font-bold hidden shadow-md">TIẾP TỤC ĐIỀU TRA</button>
+                    <button id="retry-btn" onclick="generateSimilarQuestion()" class="bg-yellow-600 text-white px-6 py-2 rounded hover:bg-yellow-700 font-bold hidden shadow-md">TÌM MANH MỐI KHÁC</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- End Screen -->
+    <div id="end-screen" class="max-w-3xl w-full text-center case-file p-8 sm:p-12 rounded-lg mt-10 hidden">
+        <h1 class="text-4xl font-bold mb-6 text-gray-900">BÁO CÁO KẾT THÚC CHUYÊN ÁN</h1>
+        <div class="text-6xl mb-4" id="rank-icon">🏆</div>
+        <h2 class="text-3xl font-bold mb-2 text-gray-800" id="final-rank">Danh hiệu</h2>
+        <p class="text-xl mb-6 story-text">Tổng điểm đánh giá năng lực: <strong id="final-score" class="text-2xl text-red-600">0</strong> / 150</p>
+        <p class="text-lg mb-8 text-gray-700 italic" id="rank-desc">Nhận xét...</p>
+        
+        <button onclick="location.reload()" class="bg-gray-900 text-white px-8 py-3 rounded text-lg font-bold hover:bg-gray-700 transition shadow-lg detective-font">LÀM LẠI HỒ SƠ</button>
+    </div>
+
+    <script>
+        let currentQuestionIndex = 0;
+        let score = 150; // Tổng điểm ban đầu (15 câu * 10 điểm)
+        let isRetry = false;
+        let currentParams = {};
+        
+        // --- DỮ LIỆU BÀI TẬP VÀ MANH MỐI ---
+        const originalQuestions = [
+            // PHẦN TRẮC NGHIỆM
+            {
+                id: 1,
+                story: "Tại hiện trường, thám tử tìm thấy một tờ giấy ghi một phân số bí ẩn. Để mở khóa két sắt, cần tìm phân số nghịch đảo của nó.",
+                params: { a: 3, b: 7, sign: -1 }, 
+                generate: function() {
+                    let a = Math.floor(Math.random() * 8) + 2;
+                    let b = Math.floor(Math.random() * 8) + 2;
+                    while(a === b) { b = Math.floor(Math.random() * 8) + 2; }
+                    let sign = Math.random() > 0.5 ? 1 : -1;
+                    return {a, b, sign};
+                },
+                getQuestion: function(p) {
+                    let signStr = p.sign === -1 ? "-" : "";
+                    return `Phân số nghịch đảo của phân số <span class="frac"><span>${signStr}${p.a}</span><span class="symbol">/</span><span class="bottom">${p.b}</span></span> là:`;
+                },
+                getOptions: function(p) {
+                    let s = p.sign === -1 ? "-" : "";
+                    let oppS = p.sign === -1 ? "" : "-";
+                    return [
+                        { text: `<span class="frac"><span>${s}${p.a}</span><span class="symbol">/</span><span class="bottom">${p.b}</span></span>`, isCorrect: false },
+                        { text: `<span class="frac"><span>${s}${p.b}</span><span class="symbol">/</span><span class="bottom">${p.a}</span></span>`, isCorrect: true },
+                        { text: `<span class="frac"><span>${oppS}${p.b}</span><span class="symbol">/</span><span class="bottom">${p.a}</span></span>`, isCorrect: false },
+                        { text: `<span class="frac"><span>${oppS}${p.a}</span><span class="symbol">/</span><span class="bottom">${p.b}</span></span>`, isCorrect: false }
+                    ].sort(() => Math.random() - 0.5);
+                }
+            },
+            {
+                id: 2,
+                story: "Kẻ gian đã xóa đi một phần tọa độ trên bản đồ số. Tọa độ là một số thập phân dài cần được làm tròn để nhập vào hệ thống GPS định vị.",
+                params: { num: 123.4567 },
+                generate: function() {
+                    let abc = Math.floor(Math.random() * 900) + 100;
+                    let d = Math.floor(Math.random() * 10);
+                    let e = Math.floor(Math.random() * 10);
+                    let f = Math.floor(Math.random() * 4) + 5; // Số lớn hơn 5 để đảm bảo làm tròn lên
+                    let g = Math.floor(Math.random() * 10);
+                    return { num: parseFloat(`${abc}.${d}${e}${f}${g}`) };
+                },
+                getQuestion: function(p) {
+                    return `Làm tròn số thập phân <strong>${p.num.toString().replace('.', ',')}</strong> đến hàng phần trăm ta được kết quả là:`;
+                },
+                getOptions: function(p) {
+                    let str = p.num.toFixed(4);
+                    let base = Math.floor(p.num * 100) / 100;
+                    let rounded = (base + 0.01).toFixed(2);
+                    return [
+                        { text: base.toFixed(2).replace('.', ','), isCorrect: false },
+                        { text: rounded.replace('.', ','), isCorrect: true },
+                        { text: (base + 0.1).toFixed(1).replace('.', ','), isCorrect: false },
+                        { text: p.num.toFixed(3).replace('.', ','), isCorrect: false }
+                    ].sort(() => Math.random() - 0.5);
+                }
+            },
+            {
+                id: 3,
+                story: "Một mật thư được mã hóa bằng cách giấu một phân số hợp lệ giữa hàng tá các biểu thức sai lệch. Thám tử cần chỉ ra phân số đúng đó để giải mã.",
+                params: {a1: 1.5, b1: 3, a2: -5, a3: -7, b3: 9, a4: 4, b4: 2.1},
+                generate: function() {
+                    return {
+                        a1: (Math.random() * 4 + 1).toFixed(1), b1: Math.floor(Math.random() * 5) + 2,
+                        a2: -(Math.floor(Math.random() * 9) + 1),
+                        a3: -(Math.floor(Math.random() * 9) + 1), b3: Math.floor(Math.random() * 8) + 2,
+                        a4: Math.floor(Math.random() * 9) + 1, b4: (Math.random() * 4 + 1).toFixed(1)
+                    };
+                },
+                getQuestion: function(p) {
+                    return `Trong các cách viết sau, cách viết nào cho ta một phân số hợp lệ?`;
+                },
+                getOptions: function(p) {
+                    return [
+                        { text: `<span class="frac"><span>${p.a1.toString().replace('.', ',')}</span><span class="symbol">/</span><span class="bottom">${p.b1}</span></span>`, isCorrect: false },
+                        { text: `<span class="frac"><span>${p.a2}</span><span class="symbol">/</span><span class="bottom">0</span></span>`, isCorrect: false },
+                        { text: `<span class="frac"><span>${p.a3}</span><span class="symbol">/</span><span class="bottom">${p.b3}</span></span>`, isCorrect: true },
+                        { text: `<span class="frac"><span>${p.a4}</span><span class="symbol">/</span><span class="bottom">${p.b4.toString().replace('.', ',')}</span></span>`, isCorrect: false }
+                    ].sort(() => Math.random() - 0.5);
+                }
+            },
+            {
+                id: 4,
+                story: "Để pha chế dung dịch vô hiệu hóa bom mìn, thám tử phải trộn hai bình hóa chất với dung tích cụ thể. Cần tính chính xác tổng lượng chất lỏng.",
+                params: {a:3, b:4, c:1, d:2},
+                generate: function() {
+                    let b = [2, 4, 8][Math.floor(Math.random() * 3)];
+                    let d = [2, 4, 8][Math.floor(Math.random() * 3)];
+                    if(b===d) d = b*2; 
+                    let a = Math.floor(Math.random() * b); if(a===0) a=1;
+                    let c = Math.floor(Math.random() * d); if(c===0) c=1;
+                    return {a, b, c, d};
+                },
+                getQuestion: function(p) {
+                    return `Kết quả của phép tính <span class="frac"><span>${p.a}</span><span class="symbol">/</span><span class="bottom">${p.b}</span></span> + <span class="frac"><span>-${p.c}</span><span class="symbol">/</span><span class="bottom">${p.d}</span></span> là:`;
+                },
+                getOptions: function(p) {
+                    // Calculate real answer
+                    let denom = p.b * p.d;
+                    let num = (p.a * p.d) + (-p.c * p.b);
+                    
+                    // GCD function to simplify
+                    function gcd(x, y) {
+                        x = Math.abs(x); y = Math.abs(y);
+                        while(y) {
+                            var t = y;
+                            y = x % y;
+                            x = t;
+                        }
+                        return x;
+                    }
+                    let g = gcd(num, denom);
+                    let td = num/g; let md = denom/g;
+                    if(md < 0) { td = -td; md = -md; }
+                    
+                    let correctStr = td === 0 ? "0" : (md === 1 ? `${td}` : `<span class="frac"><span>${td}</span><span class="symbol">/</span><span class="bottom">${md}</span></span>`);
+                    
+                    return [
+                        { text: `<span class="frac"><span>${p.a - p.c}</span><span class="symbol">/</span><span class="bottom">${p.b + p.d}</span></span>`, isCorrect: false },
+                        { text: `<span class="frac"><span>${p.a + p.c}</span><span class="symbol">/</span><span class="bottom">${p.b}</span></span>`, isCorrect: false },
+                        { text: correctStr, isCorrect: true },
+                        { text: `<span class="frac"><span>${-(p.a - p.c)}</span><span class="symbol">/</span><span class="bottom">${p.b}</span></span>`, isCorrect: false }
+                    ].sort(() => Math.random() - 0.5);
+                }
+            },
+            {
+                id: 5,
+                story: "Theo sơ đồ do camera an ninh ghi lại, nghi phạm đã đứng giấu đồ vật ở chính giữa một con hẻm. Thám tử cần xác định khoảng cách chính xác từ đầu hẻm đến điểm đó.",
+                params: {len: 8},
+                generate: function() {
+                    let len = (Math.floor(Math.random() * 10) + 2) * 2; // Số chẵn từ 4 đến 22
+                    return {len};
+                },
+                getQuestion: function(p) {
+                    return `Cho điểm M là trung điểm của đoạn thẳng AB. Biết AB = <strong>${p.len} cm</strong>. Độ dài đoạn thẳng AM là:`;
+                },
+                getOptions: function(p) {
+                    return [
+                        { text: `${p.len / 2} cm`, isCorrect: true },
+                        { text: `${p.len / 4} cm`, isCorrect: false },
+                        { text: `${p.len} cm`, isCorrect: false },
+                        { text: `${p.len * 2} cm`, isCorrect: false }
+                    ].sort(() => Math.random() - 0.5);
+                }
+            },
+            {
+                id: 6,
+                story: "Một cuốn sổ tay ghi chép lộ ra thông tin về hoạt động liên lạc của nghi phạm. Thám tử cần phân tích dữ liệu thống kê này để tìm ra ngày hắn hoạt động mạnh nhất.",
+                params: {
+                    data: [
+                        { day: "Thứ Hai", den: 15, di: 10 },
+                        { day: "Thứ Ba", den: 12, di: 18 },
+                        { day: "Thứ Tư", den: 20, di: 15 },
+                        { day: "Thứ Năm", den: 9, di: 5 }
+                    ],
+                    answerDay: "Thứ Ba"
+                },
+                generate: function() {
+                    const days = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"];
+                    let selectedDays = days.sort(() => 0.5 - Math.random()).slice(0, 4);
+                    let data = [];
+                    let answerDay = '';
+                    
+                    const targetIndex = Math.floor(Math.random() * 4);
+                    
+                    for(let i=0; i<4; i++) {
+                        let den = Math.floor(Math.random() * 10) + 5;
+                        let di;
+                        if(i === targetIndex) {
+                            di = den + Math.floor(Math.random() * 5) + 2; 
+                            answerDay = selectedDays[i];
+                        } else {
+                            di = den - Math.floor(Math.random() * 4) - 1; 
+                            if(di < 0) di = 1;
+                        }
+                        data.push({ day: selectedDays[i], den: den, di: di });
+                    }
+                    return { data, answerDay };
+                },
+                getQuestion: function(p) {
+                    if (!p || !p.data) p = this.generate(); // Thêm chốt an toàn để chống lỗi undefined
+                    let tableStr = `<br/><table class="w-full mt-4 text-sm text-center border-collapse border border-gray-400 bg-white">
+                        <tr class="bg-gray-300 text-gray-800"><th class="border border-gray-400 p-2">Ngày</th><th class="border border-gray-400 p-2">Cuộc gọi đến</th><th class="border border-gray-400 p-2">Cuộc gọi đi</th></tr>`;
+                    p.data.forEach(d => {
+                        tableStr += `<tr class="text-gray-700"><td class="border border-gray-400 p-2 font-bold">${d.day}</td><td class="border border-gray-400 p-2">${d.den}</td><td class="border border-gray-400 p-2 font-bold">${d.di}</td></tr>`;
+                    });
+                    tableStr += `</table>`;
+                    
+                    return `Dựa vào bảng số liệu trên ghi chép của nghi phạm dưới đây, ngày nào có số cuộc gọi đi <strong>nhiều hơn</strong> số cuộc gọi đến? ${tableStr}`;
+                },
+                getOptions: function(p) {
+                    if (!p || !p.data) p = this.generate(); // Thêm chốt an toàn
+                    return p.data.map(d => {
+                        return { text: d.day, isCorrect: d.day === p.answerDay };
+                    });
+                }
+            },
+            {
+                id: 7,
+                story: "Một công thức chế tạo mực tàng hình cổ xưa được viết dưới dạng một hỗn số âm. Siêu máy tính giải mã tại trụ sở yêu cầu dữ liệu phải ở dạng phân số để xử lý.",
+                params: {a: 2, b: 1, c: 5},
+                generate: function() {
+                    let a = Math.floor(Math.random() * 5) + 1; // Phần nguyên dương (khi in ra sẽ thêm dấu âm)
+                    let c = Math.floor(Math.random() * 6) + 3; // Mẫu số
+                    let b = Math.floor(Math.random() * (c-1)) + 1; // Tử số
+                    return {a, b, c};
+                },
+                getQuestion: function(p) {
+                    return `Hỗn số <strong>-${p.a}</strong> <span class="frac"><span>${p.b}</span><span class="symbol">/</span><span class="bottom">${p.c}</span></span> được viết dưới dạng phân số là:`;
+                },
+                getOptions: function(p) {
+                    const tuDung = -(p.a * p.c + p.b); // Đúng: -(a*c + b)
+                    const tuSai1 = -p.a * p.c + p.b;   // Lỗi sai phổ biến: (-a*c) + b
+                    const tuSai2 = p.a * p.c + p.b;    // Lỗi quên dấu âm
+                    const tuSai3 = -(p.a + p.b);       // Lỗi sai cộng nhầm phần nguyên và tử
+                    
+                    return [
+                        { text: `<span class="frac"><span>${tuSai1}</span><span class="symbol">/</span><span class="bottom">${p.c}</span></span>`, isCorrect: false },
+                        { text: `<span class="frac"><span>${tuDung}</span><span class="symbol">/</span><span class="bottom">${p.c}</span></span>`, isCorrect: true },
+                        { text: `<span class="frac"><span>${tuSai2}</span><span class="symbol">/</span><span class="bottom">${p.c}</span></span>`, isCorrect: false },
+                        { text: `<span class="frac"><span>${tuSai3}</span><span class="symbol">/</span><span class="bottom">${p.c}</span></span>`, isCorrect: false }
+                    ].sort(() => Math.random() - 0.5);
+                }
+            },
+            {
+                id: 8,
+                story: "Băng đảng đang lẩn trốn có một quy mô nhất định. Lực lượng trinh sát báo về tổng số thành viên và tỉ lệ phần trăm các nữ sát thủ. Thám tử phải suy luận ra số lượng nam giới trong băng đảng để bố trí lực lượng phục kích.",
+                params: {total: 40, pct: 40},
+                generate: function() {
+                    let options = [ [40, 40], [50, 60], [30, 20], [60, 30], [25, 40] ];
+                    let choice = options[Math.floor(Math.random() * options.length)];
+                    return {total: choice[0], pct: choice[1]};
+                },
+                getQuestion: function(p) {
+                    return `Một nhóm tội phạm có <strong>${p.total}</strong> tên, trong đó nữ giới chiếm <strong>${p.pct}%</strong>. Số nam giới của nhóm đó là bao nhiêu?`;
+                },
+                getOptions: function(p) {
+                    let nu = (p.total * p.pct) / 100;
+                    let nam = p.total - nu;
+                    return [
+                        { text: `${nam}`, isCorrect: true },
+                        { text: `${nu}`, isCorrect: false },
+                        { text: `${p.total - 10}`, isCorrect: false },
+                        { text: `${nam + 2}`, isCorrect: false }
+                    ].sort(() => Math.random() - 0.5);
+                }
+            },
+            {
+                id: 9,
+                story: "Một phần số tiền từ vụ cướp ngân hàng đã được thu hồi. Dựa vào báo cáo ghi chú phân số lượng tiền thu được so với tổng thể, thám tử phải tính toán tổng số tiền thực sự bị đánh cắp.",
+                params: {a: 2, b: 3, val: 18},
+                generate: function() {
+                    let b = Math.floor(Math.random() * 3) + 3; // 3, 4, 5
+                    let a = Math.floor(Math.random() * (b-1)) + 1; // 1 to b-1
+                    let k = Math.floor(Math.random() * 5) + 5; // 5 to 9
+                    let val = a * k;
+                    return {a, b, val, ans: b * k};
+                },
+                getQuestion: function(p) {
+                    return `Biết <span class="frac"><span>${p.a}</span><span class="symbol">/</span><span class="bottom">${p.b}</span></span> số tiền bị đánh cắp là <strong>${p.val} ngàn đô</strong>. Tổng số tiền bị đánh cắp ban đầu là:`;
+                },
+                getOptions: function(p) {
+                    let ans = (p.val / p.a) * p.b;
+                    let sai1 = (p.val * p.a) / p.b;
+                    let sai2 = p.val * p.b;
+                    return [
+                        { text: `${sai1} ngàn đô`, isCorrect: false },
+                        { text: `${ans} ngàn đô`, isCorrect: true },
+                        { text: `${sai2} ngàn đô`, isCorrect: false },
+                        { text: `${ans - 3} ngàn đô`, isCorrect: false }
+                    ].sort(() => Math.random() - 0.5);
+                }
+            },
+            {
+                id: 10,
+                story: "Thiết bị theo dõi GPS được gắn trên một trục đường thẳng Ox. Thám tử nhận được tọa độ khoảng cách của hai đồng phạm so với điểm phát sóng O. Cần tính toán khoảng cách thực tế giữa hai kẻ này.",
+                params: {oa: 3, ob: 7},
+                generate: function() {
+                    let oa = Math.floor(Math.random() * 5) + 2;
+                    let ob = oa + Math.floor(Math.random() * 6) + 3;
+                    return {oa, ob};
+                },
+                getQuestion: function(p) {
+                    return `Trên tia Ox xác định hai tọa độ A và B sao cho khoảng cách OA = <strong>${p.oa} km</strong>, OB = <strong>${p.ob} km</strong>. Khoảng cách giữa hai điểm A và B là:`;
+                },
+                getOptions: function(p) {
+                    let ans = p.ob - p.oa;
+                    return [
+                        { text: `${p.oa + p.ob} km`, isCorrect: false },
+                        { text: `${ans} km`, isCorrect: true },
+                        { text: `${ans + 1} km`, isCorrect: false },
+                        { text: `${p.oa} km`, isCorrect: false }
+                    ].sort(() => Math.random() - 0.5);
+                }
+            },
+            
+            // PHẦN ĐIỀN KHUYẾT
+            {
+                id: 11,
+                type: "input",
+                story: "Trinh sát báo cáo có hai đồng phạm đang lẩn trốn. Tên A cứ <strong>a</strong> ngày xuất hiện ở quán bar một lần. Tên B cứ <strong>b</strong> ngày xuất hiện một lần. Hôm nay cả hai cùng có mặt. Thám tử cần tính xem ít nhất bao nhiêu ngày nữa cả hai lại cùng xuất hiện để giăng mẻ lưới (Mức độ: Vận dụng - BCNN).",
+                params: { a: 4, b: 6 },
+                generate: function() {
+                    let a = Math.floor(Math.random() * 5) + 3; // 3 đến 7
+                    let b = Math.floor(Math.random() * 5) + 4; // 4 đến 8
+                    while(a === b || a % b === 0 || b % a === 0) { b = Math.floor(Math.random() * 5) + 4; }
+                    return { a, b };
+                },
+                getQuestion: function(p) {
+                    return `Biết tên A cứ <strong>${p.a} ngày</strong> đến, tên B cứ <strong>${p.b} ngày</strong> đến. Hỏi ít nhất bao nhiêu ngày nữa thì cả hai cùng đến quán bar?`;
+                },
+                checkInput: function(p, userInput) {
+                    const gcd = (x, y) => (!y ? x : gcd(y, x % y));
+                    const lcm = (x, y) => (x * y) / gcd(x, y);
+                    let cleanInput = userInput.replace(/\s/g, "");
+                    return parseInt(cleanInput) === lcm(p.a, p.b);
+                }
+            },
+            {
+                id: 12,
+                type: "input",
+                story: "Mật khẩu phòng máy chủ của tập đoàn tội phạm liên kết trực tiếp với cảm biến nhiệt độ. Nhiệt độ ban đầu là <strong>T1</strong> độ C. Sau khi hệ thống làm mát khẩn cấp kích hoạt, nhiệt độ giảm đi <strong>T2</strong> độ C. Bạn cần nhập chính xác nhiệt độ hiện tại để cửa mở (Mức độ: Thông hiểu - Số nguyên).",
+                params: { t1: -5, t2: 8 },
+                generate: function() {
+                    let t1 = -(Math.floor(Math.random() * 10) + 1); // -1 đến -10
+                    let t2 = Math.floor(Math.random() * 10) + 5; // 5 đến 14
+                    return { t1, t2 };
+                },
+                getQuestion: function(p) {
+                    return `Nhiệt độ ban đầu là <strong>${p.t1} °C</strong>. Sau khi giảm thêm <strong>${p.t2} °C</strong>, nhiệt độ lúc này là bao nhiêu? (Nhập số âm nếu có)`;
+                },
+                checkInput: function(p, userInput) {
+                    let cleanInput = userInput.replace(/\s/g, "");
+                    return parseInt(cleanInput) === (p.t1 - p.t2);
+                }
+            },
+            {
+                id: 13,
+                type: "input",
+                story: "Manh mối tiếp theo là một két sắt mini. Mật mã mở két chính là số tiền thực tế (đơn vị: đô la) mà nghi phạm đã dùng để mua thiết bị phá sóng, biết thiết bị có giá niêm yết là <strong>P</strong> đô la và đã được giảm giá <strong>x%</strong> (Mức độ: Vận dụng - Tỉ số phần trăm).",
+                params: { p: 500, x: 15 },
+                generate: function() {
+                    let p = (Math.floor(Math.random() * 10) + 2) * 100; // 200, 300... 1100
+                    let x = (Math.floor(Math.random() * 5) + 1) * 5; // 5, 10, 15, 20, 25
+                    return { p, x };
+                },
+                getQuestion: function(p) {
+                    return `Giá niêm yết của thiết bị: <strong>${p.p} đô la</strong>. Mức giảm giá: <strong>${p.x}%</strong>. Hãy tính số tiền thực tế phải trả.`;
+                },
+                checkInput: function(p, userInput) {
+                    let ans = p.p * (100 - p.x) / 100;
+                    let cleanInput = userInput.replace(/\s/g, "");
+                    return parseInt(cleanInput) === ans;
+                }
+            },
+            {
+                id: 14,
+                type: "input",
+                story: "Trong danh sách gồm <strong>N</strong> kẻ tình nghi do tình báo gửi về, có một phần số kẻ tình nghi đã xác minh được bằng chứng ngoại phạm chắc chắn. Thám tử cần tìm ra số lượng nghi phạm còn lại cần phải cử người theo dõi (Mức độ: Thông hiểu - Phân số).",
+                params: { n: 45, a: 2, b: 5 },
+                generate: function() {
+                    let b = Math.floor(Math.random() * 4) + 3; // 3 đến 6
+                    let a = Math.floor(Math.random() * (b - 1)) + 1; // 1 đến b-1
+                    let k = Math.floor(Math.random() * 10) + 5; // 5 đến 14
+                    let n = b * k;
+                    return { n, a, b };
+                },
+                getQuestion: function(p) {
+                    return `Có tổng cộng <strong>${p.n}</strong> kẻ tình nghi. Biết <span class="frac"><span>${p.a}</span><span class="symbol">/</span><span class="bottom">${p.b}</span></span> số đó đã có bằng chứng ngoại phạm. Hỏi còn lại bao nhiêu nghi phạm cần theo dõi?`;
+                },
+                checkInput: function(p, userInput) {
+                    let ans = p.n - (p.n * p.a / p.b);
+                    let cleanInput = userInput.replace(/\s/g, "");
+                    return parseInt(cleanInput) === ans;
+                }
+            },
+            {
+                id: 15,
+                type: "input",
+                story: "Trước khi tẩu thoát, tên trùm tội phạm để lại trên bàn một tờ giấy ghi một dãy phép tính dài. Hắn để lại lời nhắn: 'Mã số vô hiệu hóa bom là TỬ SỐ của kết quả biểu thức này sau khi đã rút gọn thành phân số tối giản' (Mức độ: Vận dụng cao - Quy luật phân số).",
+                params: { n: 9 },
+                generate: function() {
+                    let n = Math.floor(Math.random() * 10) + 8; // 8 đến 17
+                    return { n };
+                },
+                getQuestion: function(p) {
+                    return `Tính giá trị của: <br/> <div class="text-center my-4 font-bold text-xl text-gray-800">S = <span class="frac"><span>1</span><span class="symbol">/</span><span class="bottom">1.2</span></span> + <span class="frac"><span>1</span><span class="symbol">/</span><span class="bottom">2.3</span></span> + <span class="frac"><span>1</span><span class="symbol">/</span><span class="bottom">3.4</span></span> + ... + <span class="frac"><span>1</span><span class="symbol">/</span><span class="bottom">${p.n}.${p.n+1}</span></span></div> <br/> Hãy nhập TỬ SỐ của S (khi S là phân số tối giản):`;
+                },
+                checkInput: function(p, userInput) {
+                    // S = n / (n+1). Tử số là n.
+                    let cleanInput = userInput.replace(/\s/g, "");
+                    return parseInt(cleanInput) === p.n;
+                }
+            }
+        ];
+
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            currentQuestionIndex = 0;
+            score = 150;
+            document.getElementById('score').textContent = score;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const qDef = originalQuestions[currentQuestionIndex];
+            
+            document.getElementById('progress').textContent = `${currentQuestionIndex + 1}/15`;
+            document.getElementById('question-title').textContent = `Manh mối #${currentQuestionIndex + 1}`;
+            
+            // Nếu là retry (trả lời sai) thì sinh số liệu mới, nếu là câu mới thì dùng số gốc (hoặc random tùy ý, ở đây ưu tiên dùng params mặc định cho lần đầu)
+            if (isRetry) {
+                currentParams = qDef.generate();
+                isRetry = false;
+            } else {
+                currentParams = qDef.params; 
+            }
+            
+            renderQuestionContent(qDef, currentParams);
+            
+            // Reset UI phần phản hồi
+            document.getElementById('feedback-area').classList.add('hidden');
+            document.getElementById('next-btn').classList.add('hidden');
+            document.getElementById('retry-btn').classList.add('hidden');
+        }
+
+        function renderQuestionContent(qDef, params) {
+            const contextEl = document.getElementById('story-context');
+            contextEl.innerHTML = qDef.story;
+            
+            const textEl = document.getElementById('question-text');
+            textEl.innerHTML = `<span class="absolute left-0 top-1 text-gray-500 opacity-60">🔍</span>` + qDef.getQuestion(params);
+            
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            
+            // Hiển thị ô nhập (điền khuyết)
+            if (qDef.type === "input") {
+                const inputWrapper = document.createElement('div');
+                inputWrapper.className = "flex flex-col sm:flex-row items-center mt-6 gap-4 w-full sm:col-span-2";
+                
+                const inputField = document.createElement('input');
+                inputField.type = "text";
+                inputField.className = "border-2 border-gray-400 rounded px-4 py-3 text-xl w-full sm:w-2/3 focus:outline-none focus:border-gray-800 detective-font bg-white shadow-inner";
+                inputField.placeholder = "Nhập đáp án (chỉ ghi số)...";
+                
+                const submitBtn = document.createElement('button');
+                submitBtn.className = "bg-gray-800 text-white px-6 py-3 rounded hover:bg-gray-700 font-bold shadow-md w-full sm:w-1/3 transition-colors";
+                submitBtn.textContent = "XÁC NHẬN";
+                
+                const processInput = () => {
+                    const userInput = inputField.value;
+                    if (userInput.trim() === "") return;
+                    
+                    const isCorrect = qDef.checkInput(params, userInput);
+                    inputField.disabled = true;
+                    submitBtn.disabled = true;
+                    
+                    if (isCorrect) {
+                        inputField.classList.add('border-green-500', 'bg-green-50', 'text-green-800');
+                    } else {
+                        inputField.classList.add('border-red-500', 'bg-red-50', 'text-red-800');
+                    }
+                    
+                    handleAnswerResult(isCorrect, null);
+                };
+
+                submitBtn.onclick = processInput;
+                inputField.addEventListener("keypress", (e) => {
+                    if (e.key === "Enter") processInput();
+                });
+
+                inputWrapper.appendChild(inputField);
+                inputWrapper.appendChild(submitBtn);
+                optionsContainer.appendChild(inputWrapper);
+                
+                setTimeout(() => inputField.focus(), 100);
+            } 
+            // Hiển thị nút bấm (trắc nghiệm)
+            else {
+                const options = qDef.getOptions(params);
+                
+                options.forEach((opt, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = `option-btn p-4 border-2 border-gray-300 rounded text-left bg-white text-gray-800 font-medium text-lg flex items-center transition-colors duration-200`;
+                    btn.innerHTML = `<span class="font-bold mr-3 text-gray-500 inline-block w-6">${String.fromCharCode(65 + index)}.</span> <span>${opt.text}</span>`;
+                    btn.onclick = () => checkAnswer(btn, opt.isCorrect, optionsContainer);
+                    optionsContainer.appendChild(btn);
+                });
+            }
+        }
+
+        function handleAnswerResult(isCorrect, selectedBtn) {
+            const feedbackArea = document.getElementById('feedback-area');
+            const feedbackText = document.getElementById('feedback-text');
+            feedbackArea.classList.remove('hidden');
+            
+            if (isCorrect) {
+                if (selectedBtn) {
+                    selectedBtn.classList.remove('selected', 'border-gray-300');
+                    selectedBtn.classList.add('correct');
+                }
+                feedbackText.textContent = "Chính xác! Lập luận rất sắc bén.";
+                feedbackText.className = "text-lg font-bold mb-4 text-green-600";
+                document.getElementById('next-btn').classList.remove('hidden');
+            } else {
+                if (selectedBtn) {
+                    selectedBtn.classList.remove('selected', 'border-gray-300');
+                    selectedBtn.classList.add('wrong');
+                }
+                feedbackText.textContent = "Suy luận có lỗ hổng! Hiện trường đã bị thay đổi, đặc vụ phải điều tra lại với manh mối mới.";
+                feedbackText.className = "text-lg font-bold mb-4 text-red-600";
+                document.getElementById('retry-btn').classList.remove('hidden');
+                
+                // Trừ điểm khi sai
+                score -= 5;
+                if(score < 0) score = 0;
+                document.getElementById('score').textContent = score;
+                isRetry = true;
+            }
+        }
+
+        function checkAnswer(selectedBtn, isCorrect, container) {
+            const buttons = container.querySelectorAll('.option-btn');
+            buttons.forEach(b => {
+                b.disabled = true;
+                if (b !== selectedBtn) b.classList.add('opacity-50');
+            });
+            
+            selectedBtn.classList.add('selected');
+            handleAnswerResult(isCorrect, selectedBtn);
+        }
+
+        function generateSimilarQuestion() {
+            // Khi ấn "Tìm manh mối khác", tải lại nguyên câu hỏi đó với params mới
+            loadQuestion();
+        }
+
+        function nextAction() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < originalQuestions.length) {
+                loadQuestion();
+            } else {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('end-screen').classList.remove('hidden');
+            
+            document.getElementById('final-score').textContent = score;
+            
+            let rank = "";
+            let desc = "";
+            let icon = "";
+            
+            if (score >= 140) {
+                rank = "THÁM TỬ LỪNG DANH";
+                desc = "Tuyệt đỉnh! Không một tên tội phạm nào có thể qua mắt được bạn. Bộ óc toán học của bạn chính là vũ khí sắc bén nhất.";
+                icon = "🎖️";
+                document.getElementById('final-rank').className = "text-3xl font-bold mb-2 text-yellow-500";
+            } else if (score >= 100) {
+                rank = "ĐẶC VỤ CAO CẤP";
+                desc = "Rất tốt! Bạn đã phá giải thành công chuyên án với kỹ năng phân tích xuất sắc. Chỉ một chút sai sót nhỏ nhưng không đáng kể.";
+                icon = "🏅";
+                document.getElementById('final-rank').className = "text-3xl font-bold mb-2 text-blue-600";
+            } else if (score >= 50) {
+                rank = "CẢNH SÁT TÂN BINH";
+                desc = "Bạn đã hoàn thành nhiệm vụ, nhưng quá trình điều tra còn vấp váp nhiều. Cần rèn luyện thêm tư duy logic nhé!";
+                icon = " badge";
+                icon = "👮";
+                document.getElementById('final-rank').className = "text-3xl font-bold mb-2 text-green-600";
+            } else {
+                rank = "THỰC TẬP SINH";
+                desc = "Băng đảng tội phạm đã suýt trốn thoát vì những lập luận sai lầm của bạn. Hãy ôn tập lại kiến thức Toán 6 và thử lại nhé.";
+                icon = "📝";
+                document.getElementById('final-rank').className = "text-3xl font-bold mb-2 text-gray-500";
+            }
+            
+            document.getElementById('final-rank').textContent = rank;
+            document.getElementById('rank-desc').textContent = desc;
+            document.getElementById('rank-icon').textContent = icon;
+        }
+    </script>
+</body>
+</html>
