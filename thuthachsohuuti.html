@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Điệp Vụ Toán 7 - Hồ Sơ Alpha: Số Hữu Tỉ (3 Chặng)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background-color: #000;
+            color: #0f0;
+            margin: 0;
+            overflow-x: hidden;
+            overflow-y: auto; /* Cho phép cuộn dọc để thấy nút D trên màn hình nhỏ */
+            -webkit-font-smoothing: antialiased;
+        }
+
+        #matrix-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; opacity: 0.35; 
+        }
+
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0,0,0,0.15) 50%,
+                rgba(0,0,0,0.15)
+            );
+            background-size: 100% 4px;
+            pointer-events: none; z-index: 50;
+        }
+
+        .main-container {
+            position: relative; z-index: 10;
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            padding: 1rem;
+        }
+
+        .glass-panel {
+            background: rgba(5, 10, 5, 0.85);
+            border: 1px solid #0f0;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.15), inset 0 0 20px rgba(0, 255, 0, 0.05);
+            backdrop-filter: blur(4px);
+            width: 100%; max-width: 800px; border-radius: 4px;
+        }
+
+        .btn-hacker {
+            position: relative; background: rgba(0, 20, 0, 0.5);
+            color: #0f0; border: 1px solid #0f0;
+            text-transform: uppercase; transition: all 0.2s ease;
+            cursor: pointer; border-radius: 2px;
+            font-family: 'Share Tech Mono', monospace;
+        }
+        
+        .btn-hacker:hover:not(:disabled) {
+            background: #0f0; color: #000;
+            box-shadow: 0 0 15px #0f0; transform: translateY(-1px);
+        }
+
+        .btn-hacker:disabled { cursor: not-allowed; opacity: 0.6; }
+
+        .btn-hacker.correct {
+            background: #0f0 !important; color: #000 !important;
+            border-color: #0f0 !important; box-shadow: 0 0 20px #0f0;
+            animation: pulseCorrect 1s infinite;
+        }
+
+        .btn-hacker.wrong {
+            background: rgba(255, 0, 0, 0.2) !important; color: #ff3333 !important;
+            border-color: #ff3333 !important; box-shadow: 0 0 10px #ff3333;
+        }
+
+        @keyframes pulseCorrect {
+            0% { box-shadow: 0 0 10px #0f0; }
+            50% { box-shadow: 0 0 25px #0f0, inset 0 0 10px #0f0; }
+            100% { box-shadow: 0 0 10px #0f0; }
+        }
+
+        .crt-text { text-shadow: 0 0 5px rgba(0, 255, 0, 0.5); }
+        .math-text { font-family: Arial, Helvetica, sans-serif; letter-spacing: 1px; }
+
+        .typewriter-cursor {
+            display: inline-block; width: 10px; height: 1.2em;
+            background-color: #0f0; vertical-align: bottom;
+            animation: blink 1s step-end infinite; margin-left: 4px;
+            box-shadow: 0 0 5px #0f0;
+        }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        .hidden-screen { display: none !important; }
+
+        .glitch { position: relative; }
+        .glitch::before, .glitch::after {
+            content: attr(data-text); position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%; opacity: 0.8;
+        }
+        .glitch::before {
+            left: 2px; text-shadow: -2px 0 #ff00c1;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 5s infinite linear alternate-reverse;
+        }
+        .glitch::after {
+            left: -2px; text-shadow: -2px 0 #00fff9;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim2 5s infinite linear alternate-reverse;
+        }
+        @keyframes glitch-anim {
+            0% { clip: rect(10px, 9999px, 83px, 0); }
+            20% { clip: rect(61px, 9999px, 20px, 0); }
+            40% { clip: rect(89px, 9999px, 51px, 0); }
+            60% { clip: rect(32px, 9999px, 98px, 0); }
+            80% { clip: rect(74px, 9999px, 12px, 0); }
+            100% { clip: rect(4px, 9999px, 66px, 0); }
+        }
+        @keyframes glitch-anim2 {
+            0% { clip: rect(35px, 9999px, 91px, 0); }
+            20% { clip: rect(12px, 9999px, 45px, 0); }
+            40% { clip: rect(78px, 9999px, 14px, 0); }
+            60% { clip: rect(54px, 9999px, 89px, 0); }
+            80% { clip: rect(21px, 9999px, 67px, 0); }
+            100% { clip: rect(93px, 9999px, 32px, 0); }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="matrix-canvas"></canvas>
+    <div class="scanlines"></div>
+    
+    <div class="main-container">
+        <!-- Màn hình khởi động -->
+        <div id="start-screen" class="glass-panel p-8 md:p-12 text-center flex flex-col items-center justify-center">
+            <div class="mb-8">
+                <svg class="w-24 h-24 mx-auto text-green-500 mb-6 drop-shadow-[0_0_10px_rgba(0,255,0,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                </svg>
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 crt-text glitch" data-text="HỒ SƠ ALPHA: SỐ HỮU TỈ">HỒ SƠ ALPHA: SỐ HỮU TỈ</h1>
+                <p class="text-green-600 uppercase tracking-[0.2em] text-sm md:text-lg border-b border-green-800 pb-4 inline-block">Chiến dịch 3 Chặng - Sách Kết Nối Tri Thức</p>
+            </div>
+            <div class="h-12 flex items-center justify-center mb-8">
+                <p id="boot-text" class="text-sm md:text-base opacity-90 text-green-400"></p>
+            </div>
+            <button id="start-btn" onclick="startMission()" class="btn-hacker px-10 py-4 font-bold text-lg md:text-xl w-full sm:w-auto tracking-widest hidden opacity-0 transition-opacity duration-500">
+                > KÍCH HOẠT 3 CHẶNG GIẢI MÃ_
+            </button>
+        </div>
+
+        <div id="quiz-screen" class="glass-panel p-6 md:p-10 hidden-screen flex flex-col w-full">
+            <div class="text-center mb-4">
+                <!-- Tên Chặng sẽ hiển thị ở đây -->
+                <h2 id="stage-title" class="text-xl md:text-2xl font-bold text-green-400 mb-2 glitch uppercase tracking-widest" data-text=""></h2>
+            </div>
+            
+            <div class="flex justify-between items-end border-b border-green-800 pb-3 mb-6">
+                <div>
+                    <span class="text-xs text-green-600 block mb-1 tracking-widest">TIẾN TRÌNH TỔNG QUÁT</span>
+                    <span id="progress-text" class="text-sm md:text-base font-bold tracking-widest text-white">DỮ LIỆU: 1/10</span>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs text-green-600 block mb-1 tracking-widest">TRẠNG THÁI</span>
+                    <span class="text-xs md:text-sm text-green-400 font-bold animate-pulse">ĐANG TRUY XUẤT...</span>
+                </div>
+            </div>
+            
+            <div class="w-full bg-black/50 h-3 mb-8 rounded-sm overflow-hidden border border-green-900">
+                <div id="progress-bar" class="bg-green-500 h-full transition-all duration-700 ease-out shadow-[0_0_10px_#0f0]" style="width: 0%"></div>
+            </div>
+
+            <div class="min-h-[130px] mb-8 bg-black/30 p-4 border-l-4 border-green-500">
+                <p class="text-green-700 text-xs mb-2 tracking-widest uppercase">> Đang phân tích thuật toán...</p>
+                <p id="question-text" class="text-lg md:text-2xl leading-relaxed text-white math-text">
+                    <!-- Text typed here -->
+                </p>
+                <div id="question-extra" class="mt-4 transition-opacity duration-500 opacity-0 w-full flex justify-center"></div>
+            </div>
+
+            <div id="options-container" class="flex-grow flex flex-col justify-end space-y-3">
+            </div>
+            
+            <div id="feedback-container" class="min-h-[3rem] mt-6 flex flex-col items-center justify-center font-bold text-sm md:text-base tracking-widest opacity-0 transition-opacity duration-300">
+                <!-- Feedback text injected here -->
+            </div>
+        </div>
+
+        <div id="result-screen" class="glass-panel p-8 md:p-12 text-center hidden-screen flex flex-col items-center justify-center">
+            <svg class="w-20 h-20 mx-auto text-green-500 mb-4 drop-shadow-[0_0_10px_rgba(0,255,0,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <h2 class="text-3xl md:text-5xl font-bold mb-2 crt-text tracking-widest">BÁO CÁO ALPHA HOÀN TẤT</h2>
+            <div class="my-8 border-t border-b border-green-800 py-8 w-full bg-black/20">
+                <p class="text-sm md:text-base mb-3 text-green-600 uppercase tracking-widest">Mức độ hoàn thiện 3 chặng:</p>
+                <p id="score-text" class="text-7xl font-bold crt-text text-white drop-shadow-[0_0_15px_#0f0]">0 / 10</p>
+            </div>
+            <div class="min-h-[60px] mb-8">
+                <p id="evaluation-text" class="font-bold tracking-widest text-lg md:text-xl uppercase"></p>
+            </div>
+            <button onclick="restartMission()" class="btn-hacker px-8 py-4 font-bold text-lg w-full sm:w-auto tracking-widest">
+                > TÁI KHỞI ĐỘNG CHIẾN DỊCH_
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Matrix Background
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        const letters = '0123456789ℚℤℕ+-×÷=≠<>≤≥∞∫∑π';
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const drops = [];
+        for (let x = 0; x < columns; x++) { drops[x] = 1; }
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#0F0';
+            ctx.font = fontSize + 'px monospace';
+            
+            for (let i = 0; i < drops.length; i++) {
+                const text = letters.charAt(Math.floor(Math.random() * letters.length));
+                if(Math.random() > 0.98) ctx.fillStyle = '#fff';
+                else ctx.fillStyle = '#0F0';
+                
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 50);
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        });
+
+        // Audio Setup
+        let synth; let errorSynth;
+        async function initAudio() {
+            if (!synth) {
+                await Tone.start();
+                synth = new Tone.Synth({
+                    oscillator: { type: 'square' },
+                    envelope: { attack: 0.02, decay: 0.1, sustain: 0.1, release: 0.5 }
+                }).toDestination();
+                synth.volume.value = -12;
+                
+                errorSynth = new Tone.Synth({
+                    oscillator: { type: 'sawtooth' },
+                    envelope: { attack: 0.05, decay: 0.2, sustain: 0, release: 0.5 }
+                }).toDestination();
+                errorSynth.volume.value = -10;
+            }
+        }
+        function playCorrectSound() {
+            if (synth) { const now = Tone.now(); synth.triggerAttackRelease("E5", "0.1", now); synth.triggerAttackRelease("C6", "0.2", now + 0.15); }
+        }
+        function playWrongSound() {
+            if (errorSynth) { const now = Tone.now(); errorSynth.triggerAttackRelease("D3", "0.15", now); errorSynth.triggerAttackRelease("G2", "0.35", now + 0.15); }
+        }
+
+        const quizStages = [
+            {
+                stageTitle: "CHẶNG 1: KHÁI NIỆM & SỐ ĐỐI",
+                questions: [
+                    {
+                        question: "[Cấp độ 1] Tập hợp số hữu tỉ ℚ bao gồm các số được viết dưới dạng phân số a/b. Điều kiện của a và b là gì?",
+                        options: ["a, b ∈ ℕ, b ≠ 0", "a, b ∈ ℤ, b ≠ 0", "a ∈ ℤ, b ∈ ℕ", "a, b ∈ ℚ, b ≠ 0"],
+                        correctAnswer: "a, b ∈ ℤ, b ≠ 0"
+                    },
+                    {
+                        question: "[Cấp độ 2] Dựa vào bài tập 1.1 SGK, khẳng định nào sau đây là MỘT DỮ LIỆU ĐÚNG?",
+                        options: ["0,25 ∉ ℚ", "-6/7 ∈ ℚ", "-235 ∉ ℚ", "Cả 3 khẳng định đều sai"],
+                        correctAnswer: "-6/7 ∈ ℚ"
+                    },
+                    {
+                        question: "[Cấp độ 3] Khẳng định nào sau đây là CHÍNH XÁC khi phân tích các dữ liệu: 1,5 ;  -2¾ ;  0 ?",
+                        options: ["Chỉ có 1,5 là số hữu tỉ", "Số 0 không phải là số hữu tỉ", "Cả ba số trên đều là số hữu tỉ", "Không có số nào là số hữu tỉ"],
+                        correctAnswer: "Cả ba số trên đều là số hữu tỉ"
+                    },
+                    {
+                        question: "[Cấp độ 4] Tìm mã số an ninh (Số đối): Số đối của số hữu tỉ (-0,75) là số nào?",
+                        options: ["-3/4", "3/4 (hoặc 0,75)", "4/3", "-4/3"],
+                        correctAnswer: "3/4 (hoặc 0,75)"
+                    },
+                    {
+                        question: "[Cấp độ 5 - Nâng cao] Giải mã tính chất: Phân số a/b (a, b ∈ ℤ, b ≠ 0) sẽ biểu diễn MỘT SỐ HỮU TỈ ÂM khi nào?",
+                        options: ["a và b cùng dương", "a và b cùng dấu", "a và b khác dấu", "a = 0"],
+                        correctAnswer: "a và b khác dấu"
+                    }
+                ]
+            },
+            {
+                stageTitle: "CHẶNG 2: BẢN ĐỒ TRỤC SỐ",
+                questions: [
+                    {
+                        question: "[Cấp độ 1] Định vị radar: Trên trục số, điểm biểu diễn số hữu tỉ (-5/4) nằm ở vị trí nào so với gốc O?",
+                        options: ["Nằm bên phải gốc O", "Trùng với gốc O", "Nằm bên trái gốc O", "Nằm giữa điểm 0 và 1"],
+                        correctAnswer: "Nằm bên trái gốc O"
+                    },
+                    {
+                        question: "[Cấp độ 2] Giải mã tọa độ: Nếu chia đoạn thẳng đơn vị (từ 0 đến 1) thành 3 phần bằng nhau. Điểm nằm ngay sau gốc O về bên phải (chiếm 1 phần) biểu diễn số nào?",
+                        options: ["1/3", "2/3", "-1/3", "3"],
+                        correctAnswer: "1/3"
+                    },
+                    {
+                        question: "[Cấp độ 3] Bài 1.4: Trong các phân số sau, phân số nào KHÔNG biểu diễn cùng một vị trí với số hữu tỉ (-0,625) trên trục số?",
+                        options: ["5 / -8", "-25 / 40", "10 / 16", "-10 / 16"],
+                        correctAnswer: "10 / 16"
+                    },
+                    {
+                        question: "[Cấp độ 4 - Phân tích Bản đồ] Quan sát trục số dưới đây. Điểm M biểu diễn số hữu tỉ nào?",
+                        extraHTML: `<div class='bg-white/90 p-4 rounded-lg shadow-[0_0_15px_rgba(0,255,0,0.3)] w-full max-w-md'>
+                                        <svg viewBox='0 0 400 80' class='w-full h-auto'>
+                                            <line x1='20' y1='40' x2='380' y2='40' stroke='black' stroke-width='2'/>
+                                            <polygon points='380,35 390,40 380,45' fill='black'/>
+                                            <line x1='100' y1='30' x2='100' y2='50' stroke='black' stroke-width='2'/>
+                                            <text x='100' y='70' font-family='Arial' font-size='18' text-anchor='middle' fill='black' font-weight='bold'>0</text>
+                                            <line x1='260' y1='30' x2='260' y2='50' stroke='black' stroke-width='2'/>
+                                            <text x='260' y='70' font-family='Arial' font-size='18' text-anchor='middle' fill='black' font-weight='bold'>1</text>
+                                            <line x1='140' y1='35' x2='140' y2='45' stroke='black' stroke-width='1.5'/>
+                                            <line x1='180' y1='35' x2='180' y2='45' stroke='black' stroke-width='1.5'/>
+                                            <line x1='220' y1='35' x2='220' y2='45' stroke='black' stroke-width='1.5'/>
+                                            <circle cx='220' cy='40' r='6' fill='#e11d48'/>
+                                            <text x='220' y='25' font-family='Arial' font-size='20' font-weight='bold' text-anchor='middle' fill='#e11d48'>M</text>
+                                        </svg>
+                                    </div>`,
+                        options: ["1/4", "3/4", "2/3", "4/3"],
+                        correctAnswer: "3/4"
+                    },
+                    {
+                        question: "[Cấp độ 5 - Tọa độ mục tiêu] Điểm P trên trục số sau biểu diễn số hữu tỉ nào?",
+                        extraHTML: `<div class='bg-white/90 p-4 rounded-lg shadow-[0_0_15px_rgba(0,255,0,0.3)] w-full max-w-md'>
+                                        <svg viewBox='0 0 400 80' class='w-full h-auto'>
+                                            <line x1='20' y1='40' x2='380' y2='40' stroke='black' stroke-width='2'/>
+                                            <polygon points='380,35 390,40 380,45' fill='black'/>
+                                            <line x1='340' y1='30' x2='340' y2='50' stroke='black' stroke-width='2'/>
+                                            <text x='340' y='70' font-family='Arial' font-size='18' text-anchor='middle' fill='black' font-weight='bold'>0</text>
+                                            <line x1='220' y1='30' x2='220' y2='50' stroke='black' stroke-width='2'/>
+                                            <text x='220' y='70' font-family='Arial' font-size='18' text-anchor='middle' fill='black' font-weight='bold'>-1</text>
+                                            <line x1='100' y1='30' x2='100' y2='50' stroke='black' stroke-width='2'/>
+                                            <text x='100' y='70' font-family='Arial' font-size='18' text-anchor='middle' fill='black' font-weight='bold'>-2</text>
+                                            <line x1='140' y1='35' x2='140' y2='45' stroke='black' stroke-width='1.5'/>
+                                            <line x1='180' y1='35' x2='180' y2='45' stroke='black' stroke-width='1.5'/>
+                                            <line x1='260' y1='35' x2='260' y2='45' stroke='black' stroke-width='1.5'/>
+                                            <line x1='300' y1='35' x2='300' y2='45' stroke='black' stroke-width='1.5'/>
+                                            <circle cx='180' cy='40' r='6' fill='#2563eb'/>
+                                            <text x='180' y='25' font-family='Arial' font-size='20' font-weight='bold' text-anchor='middle' fill='#2563eb'>P</text>
+                                        </svg>
+                                    </div>`,
+                        options: ["-1/3", "-2/3", "-4/3", "-5/3"],
+                        correctAnswer: "-4/3"
+                    }
+                ]
+            },
+            {
+                stageTitle: "CHẶNG 3: TRẬN CHIẾN THỨ TỰ",
+                questions: [
+                    {
+                        question: "[Cấp độ 1] So sánh hai số hữu tỉ (-2,5) và (-2,125). Mã lệnh nào dưới đây chính xác?",
+                        options: ["-2,5 > -2,125", "-2,5 < -2,125", "-2,5 = -2,125", "Không thể so sánh"],
+                        correctAnswer: "-2,5 < -2,125"
+                    },
+                    {
+                        question: "[Cấp độ 2] Nhiệm vụ sắp xếp: Sắp xếp các số hữu tỉ sau theo thứ tự TỪ BÉ ĐẾN LỚN: [2] ; [-1/2] ; [0] ; [-2].",
+                        options: ["-2 ; -1/2 ; 0 ; 2", "-2 ; 0 ; -1/2 ; 2", "2 ; 0 ; -1/2 ; -2", "-1/2 ; -2 ; 0 ; 2"],
+                        correctAnswer: "-2 ; -1/2 ; 0 ; 2"
+                    },
+                    {
+                        question: "[Cấp độ 3] Sắp xếp các số hữu tỉ sau theo thứ tự GIẢM DẦN (từ lớn đến bé): [2/5] ; [-1/3] ; [3/7] ; [-1/4].",
+                        options: [
+                            "3/7 ; 2/5 ; -1/4 ; -1/3",
+                            "3/7 ; 2/5 ; -1/3 ; -1/4",
+                            "2/5 ; 3/7 ; -1/4 ; -1/3",
+                            "2/5 ; 3/7 ; -1/3 ; -1/4"
+                        ],
+                        correctAnswer: "3/7 ; 2/5 ; -1/4 ; -1/3"
+                    },
+                    {
+                        question: "[Cấp độ 4 - Mã hóa cấp cao] So sánh hai số hữu tỉ x = -2023/2024 và y = -2024/2025. Kết luận nào sau đây đúng?",
+                        options: ["x > y", "x < y", "x = y", "Không thể so sánh"],
+                        correctAnswer: "x > y",
+                        explanation: "Sử dụng phần bù tới -1: Ta có x = -1 + 1/2024 và y = -1 + 1/2025. Vì 1/2024 > 1/2025 nên x > y."
+                    },
+                    {
+                        question: "[Cấp độ 5 - Siêu việt] Nhiệm vụ so sánh: a = -13/38 và b = 29/-88. Kết quả là:",
+                        options: ["a > b", "a < b", "a = b", "Không thể xác định"],
+                        correctAnswer: "a < b",
+                        explanation: "Sử dụng số trung gian (-1/3): Ta có a = -13/38 < -13/39 = -1/3. Mặt khác b = -29/88 > -29/87 = -1/3. Suy ra a < -1/3 < b. Vậy a < b."
+                    }
+                ]
+            }
+        ];
+
+        let currentStageIndex = 0;
+        let currentQuestionIndex = 0;
+        let globalQuestionCount = 0;
+        let score = 0;
+        let isAnimating = false;
+        let typingTimeout;
+
+        const totalQuestions = quizStages.reduce((acc, stage) => acc + stage.questions.length, 0);
+
+        window.onload = () => {
+            const bootText = "Đang tải dữ liệu từ Sách Kết Nối Tri Thức... Thiết lập 3 chặng giải mã hoàn tất.";
+            const bootEl = document.getElementById('boot-text');
+            typeWriterRaw(bootText, bootEl, 0, () => {
+                const btn = document.getElementById('start-btn');
+                btn.classList.remove('hidden');
+                setTimeout(() => { btn.classList.remove('opacity-0'); }, 100);
+            });
+        };
+
+        function startMission() {
+            initAudio();
+            document.getElementById('start-screen').classList.add('hidden-screen');
+            document.getElementById('quiz-screen').classList.remove('hidden-screen');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            isAnimating = false;
+            const currentStage = quizStages[currentStageIndex];
+            const q = currentStage.questions[currentQuestionIndex];
+            
+            // Cập nhật Tên Chặng
+            const stageTitleEl = document.getElementById('stage-title');
+            stageTitleEl.innerText = currentStage.stageTitle;
+            stageTitleEl.setAttribute('data-text', currentStage.stageTitle);
+
+            // Cập nhật Tiến độ
+            document.getElementById('progress-text').innerText = `DỮ LIỆU: ${globalQuestionCount + 1}/${totalQuestions}`;
+            const progressPercent = (globalQuestionCount / totalQuestions) * 100;
+            document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            const feedbackContainer = document.getElementById('feedback-container');
+            feedbackContainer.innerHTML = '';
+            feedbackContainer.classList.add('opacity-0');
+            
+            const qEl = document.getElementById('question-text');
+            const extraEl = document.getElementById('question-extra');
+            
+            clearTimeout(typingTimeout);
+            qEl.innerHTML = '';
+            extraEl.innerHTML = '';
+            extraEl.classList.add('opacity-0');
+            
+            typeWriter(q.question, qEl, 0, () => {
+                if (q.extraHTML) {
+                    extraEl.innerHTML = q.extraHTML;
+                    setTimeout(() => {
+                        extraEl.classList.remove('opacity-0');
+                    }, 50);
+                }
+                renderOptions(q);
+            });
+        }
+
+        function typeWriterRaw(text, element, i, callback) {
+            if (i < text.length) {
+                element.innerHTML += text.charAt(i);
+                typingTimeout = setTimeout(() => typeWriterRaw(text, element, i + 1, callback), 20);
+            } else {
+                if (callback) callback();
+            }
+        }
+
+        function typeWriter(text, element, i, callback) {
+            if (i === 0) { element.innerHTML = '<span id="typed-content"></span><span class="typewriter-cursor"></span>'; }
+            const content = document.getElementById('typed-content');
+            if (i < text.length) {
+                content.innerHTML += text.charAt(i);
+                typingTimeout = setTimeout(() => typeWriter(text, element, i + 1, callback), 15);
+            } else {
+                if (callback) callback();
+            }
+        }
+
+        function renderOptions(q) {
+            const container = document.getElementById('options-container');
+            container.innerHTML = ''; 
+            const shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+
+            shuffledOptions.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-hacker math-text w-full text-left p-3 md:p-4 font-bold text-base md:text-lg opacity-0 transform translate-y-4 transition-all duration-300';
+                btn.innerHTML = `<span class="text-green-700 mr-2">[${String.fromCharCode(65 + index)}]</span> <span class="text-white">${opt}</span>`;
+                btn.dataset.opt = opt;
+                btn.onclick = () => handleAnswer(btn, opt, q.correctAnswer);
+                container.appendChild(btn);
+                setTimeout(() => { btn.classList.remove('opacity-0', 'translate-y-4'); }, index * 150);
+            });
+        }
+
+        function handleAnswer(btn, selected, correct) {
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            const allBtns = document.querySelectorAll('#options-container button');
+            const feedbackContainer = document.getElementById('feedback-container');
+            allBtns.forEach(b => b.disabled = true);
+
+            let delay = 1800;
+            
+            // Lấy dữ liệu câu hỏi hiện tại để lấy lời giải (nếu có)
+            const currentStage = quizStages[currentStageIndex];
+            const currentQ = currentStage.questions[currentQuestionIndex];
+
+            if (selected === correct) {
+                playCorrectSound();
+                btn.classList.add('correct');
+                btn.innerHTML += ' <span class="float-right text-black animate-pulse">[ CHÍNH XÁC ]</span>';
+                feedbackContainer.innerHTML = '<span class="text-green-400 text-lg drop-shadow-[0_0_5px_#0f0]">> GIẢI MÃ THÀNH CÔNG</span>';
+                feedbackContainer.classList.remove('opacity-0');
+                score++;
+            } else {
+                playWrongSound();
+                btn.classList.add('wrong');
+                btn.innerHTML += ' <span class="float-right text-red-500">[ LỖI ]</span>';
+                allBtns.forEach(b => {
+                    if (b.dataset.opt === correct) {
+                        b.classList.add('correct');
+                        b.innerHTML += ' <span class="float-right text-black animate-pulse">[ ĐÁP ÁN CHUẨN ]</span>';
+                    }
+                });
+                
+                let explainHTML = "";
+                delay = 3500; // Mặc định 3.5s nếu không có giải thích
+                
+                if (currentQ.explanation) {
+                    explainHTML = `<div class="mt-3 text-white bg-blue-900/60 p-3 rounded-md border border-blue-500 text-sm md:text-base font-normal tracking-normal shadow-[0_0_10px_rgba(0,100,255,0.4)]">
+                                    <span class="text-blue-300 font-bold uppercase">> Lời giải chi tiết:</span><br/>${currentQ.explanation}
+                                   </div>`;
+                    delay = 8000; // Đợi 8 giây để học sinh đủ thời gian đọc lời giải
+                }
+
+                feedbackContainer.innerHTML = `
+                    <div class="flex flex-col items-center w-full">
+                        <span class="text-red-400 drop-shadow-[0_0_5px_#f00] mb-2">> PHÁT HIỆN LỖI LẬP LUẬN!</span>
+                        <span class="text-white bg-red-900/50 px-4 py-1 rounded border border-red-500 w-auto">ĐÁP ÁN ĐÚNG: ${correct}</span>
+                        ${explainHTML}
+                    </div>
+                `;
+                feedbackContainer.classList.remove('opacity-0');
+            }
+
+            // Xử lý chuyển câu và chuyển chặng
+            setTimeout(() => {
+                feedbackContainer.classList.add('opacity-0');
+                globalQuestionCount++;
+                currentQuestionIndex++;
+
+                // Kiểm tra xem đã hết câu hỏi trong Chặng hiện tại chưa
+                if (currentQuestionIndex >= quizStages[currentStageIndex].questions.length) {
+                    currentStageIndex++;
+                    currentQuestionIndex = 0;
+                    
+                    // Kiểm tra xem đã hoàn thành toàn bộ game chưa
+                    if (currentStageIndex >= quizStages.length) {
+                        showResults();
+                        return;
+                    }
+                }
+                loadQuestion();
+            }, delay);
+        }
+
+        function showResults() {
+            document.getElementById('quiz-screen').classList.add('hidden-screen');
+            document.getElementById('result-screen').classList.remove('hidden-screen');
+            
+            document.getElementById('progress-bar').style.width = `100%`;
+            document.getElementById('score-text').innerText = `${score} / ${totalQuestions}`;
+            
+            const evalEl = document.getElementById('evaluation-text');
+            evalEl.innerHTML = '';
+            let evalText = ""; let colorClass = "";
+            
+            if (score === totalQuestions) {
+                evalText = "ĐÁNH GIÁ: XUẤT SẮC. BẠN ĐÃ LÀM CHỦ TOÀN BỘ 3 CHẶNG SỐ HỮU TỈ.";
+                colorClass = "text-green-400";
+            } else if (score >= totalQuestions * 0.6) {
+                evalText = "ĐÁNH GIÁ: ĐẠT YÊU CẦU. BẠN ĐÃ NẮM ĐƯỢC BẢN ĐỒ CƠ BẢN CỦA PHÂN KHU ALPHA.";
+                colorClass = "text-green-400";
+            } else {
+                evalText = "ĐÁNH GIÁ: LỖI HỆ THỐNG KIẾN THỨC. YÊU CẦU ÔN TẬP LẠI SÁCH GIÁO KHOA.";
+                colorClass = "text-red-500";
+            }
+            
+            evalEl.className = `font-bold tracking-widest text-lg md:text-xl uppercase ${colorClass}`;
+            typeWriterRaw(evalText, evalEl, 0);
+        }
+
+        function restartMission() {
+            currentStageIndex = 0;
+            currentQuestionIndex = 0;
+            globalQuestionCount = 0;
+            score = 0;
+            document.getElementById('result-screen').classList.add('hidden-screen');
+            startMission();
+        }
+    </script>
+</body>
+</html>
