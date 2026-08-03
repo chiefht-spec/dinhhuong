@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Báo cáo Điệp vụ - Toán 7</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0f172a; /* Slate 900 */
+            color: #e2e8f0; /* Slate 200 */
+            font-family: 'Courier New', Courier, monospace; /* Font kiểu máy đánh chữ/terminal */
+        }
+        .crt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            );
+            background-size: 100% 4px;
+            z-index: 50;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+        .scanline {
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(34,197,94,0.2) 50%, rgba(0,0,0,0) 100%);
+            opacity: 0.1;
+            position: absolute;
+            bottom: 100%;
+            animation: scanline 8s linear infinite;
+            pointer-events: none;
+            z-index: 40;
+        }
+        @keyframes scanline {
+            0% { bottom: 100%; }
+            100% { bottom: -100px; }
+        }
+        .text-glow {
+            text-shadow: 0 0 5px rgba(34,197,94,0.5);
+        }
+        .cyber-border {
+            border: 1px solid #16a34a;
+            box-shadow: 0 0 10px rgba(22, 163, 74, 0.2) inset, 0 0 10px rgba(22, 163, 74, 0.2);
+        }
+        .cyber-button {
+            transition: all 0.2s;
+        }
+        .cyber-button:hover {
+            background-color: #16a34a;
+            color: #000;
+            box-shadow: 0 0 15px #16a34a;
+        }
+        .cyber-button.selected {
+            background-color: #22c55e;
+            color: #000;
+            border-color: #4ade80;
+            box-shadow: 0 0 15px #22c55e;
+        }
+        .input-field {
+            background-color: rgba(15, 23, 42, 0.8);
+            border: 1px solid #16a34a;
+            color: #4ade80;
+        }
+        .input-field:focus {
+            outline: none;
+            box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+            border-color: #4ade80;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; border-left: 1px solid #16a34a; }
+        ::-webkit-scrollbar-thumb { background: #16a34a; }
+        ::-webkit-scrollbar-thumb:hover { background: #22c55e; }
+    </style>
+</head>
+<body class="min-h-screen relative overflow-x-hidden selection:bg-green-500 selection:text-black">
+    <div class="crt-overlay"></div>
+    <div class="scanline"></div>
+
+    <div class="container mx-auto px-4 py-8 max-w-3xl relative z-10">
+        
+        <!-- Header -->
+        <header class="text-center mb-10 border-b border-green-700 pb-6 relative">
+            <div class="absolute top-0 left-0 text-green-600 text-xs animate-pulse">[ENCRYPTED CONNECTION]</div>
+            <div class="absolute top-0 right-0 text-green-600 text-xs">PORT: 7077</div>
+            
+            <h1 class="text-4xl font-bold text-green-500 mb-2 tracking-widest text-glow flex items-center justify-center gap-3">
+                <i class="fas fa-user-secret"></i> 
+                BÁO CÁO ĐIỆP VỤ
+            </h1>
+            <p class="text-green-400 text-sm tracking-widest">[CHỈ HUY TRƯỞNG &lt;-&gt; ĐIỆP VIÊN 7]</p>
+        </header>
+
+        <!-- Form Section -->
+        <main id="reportForm" class="space-y-8">
+            
+            <!-- Question 1 -->
+            <section class="cyber-border p-6 bg-slate-900/80 backdrop-blur-sm relative">
+                <div class="absolute -top-3 left-4 bg-slate-900 px-2 text-green-500 font-bold text-sm">
+                    [01] TRẠNG THÁI
+                </div>
+                <p class="mb-4 text-slate-300">Tình hình thực thi nhiệm vụ của Điệp viên hôm nay như thế nào?</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button type="button" class="status-btn cyber-button border border-green-700 p-4 text-left flex items-start gap-3 rounded-none group" data-status="xuatsac">
+                        <span class="text-2xl group-hover:scale-110 transition-transform">😎</span>
+                        <div>
+                            <div class="font-bold text-green-400 group-hover:text-black">Điệp viên xuất sắc</div>
+                            <div class="text-xs text-slate-400 group-hover:text-slate-800 mt-1">Hoàn thành nhiệm vụ 100%. Đã giải mã toàn bộ kiến thức!</div>
+                        </div>
+                    </button>
+
+                    <button type="button" class="status-btn cyber-button border border-green-700 p-4 text-left flex items-start gap-3 rounded-none group" data-status="rasoat">
+                        <span class="text-2xl group-hover:scale-110 transition-transform">📡</span>
+                        <div>
+                            <div class="font-bold text-green-400 group-hover:text-black">Đang rà soát</div>
+                            <div class="text-xs text-slate-400 group-hover:text-slate-800 mt-1">Đã nắm thông tin cốt lõi, cần thêm thời gian sắp xếp tài liệu.</div>
+                        </div>
+                    </button>
+
+                    <button type="button" class="status-btn cyber-button border border-green-700 p-4 text-left flex items-start gap-3 rounded-none group" data-status="nhieusong">
+                        <span class="text-2xl group-hover:scale-110 transition-transform">🧩</span>
+                        <div>
+                            <div class="font-bold text-yellow-500 group-hover:text-black">Nhiễu sóng</div>
+                            <div class="text-xs text-slate-400 group-hover:text-slate-800 mt-1">Tín hiệu mờ. Một vài thử thách vẫn đang làm khó em.</div>
+                        </div>
+                    </button>
+
+                    <button type="button" class="status-btn cyber-button border border-red-900 p-4 text-left flex items-start gap-3 rounded-none group hover:bg-red-600 hover:border-red-500 hover:shadow-[0_0_15px_#dc2626]" data-status="sos">
+                        <span class="text-2xl group-hover:scale-110 transition-transform">🚨</span>
+                        <div>
+                            <div class="font-bold text-red-500 group-hover:text-black">SOS - Yêu cầu chi viện</div>
+                            <div class="text-xs text-slate-400 group-hover:text-black mt-1">Mất dấu mục tiêu! Cần Chỉ huy trưởng hỗ trợ khẩn cấp.</div>
+                        </div>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Question 2 -->
+            <section class="cyber-border p-6 bg-slate-900/80 backdrop-blur-sm relative">
+                <div class="absolute -top-3 left-4 bg-slate-900 px-2 text-green-500 font-bold text-sm">
+                    [02] VALI TÌNH BÁO
+                </div>
+                <label for="thuHoach" class="block mb-3 text-slate-300">Đâu là <span class="text-green-400 font-bold">"mật mã"</span> (công thức, tính chất hoặc từ khóa toán học) đắt giá nhất em thu thập được trong trận địa hôm nay?</label>
+                <textarea id="thuHoach" rows="3" class="input-field w-full p-3 font-mono text-sm resize-none" placeholder="> Nhập báo cáo mật mã tại đây..."></textarea>
+            </section>
+
+            <!-- Question 3 -->
+            <section class="cyber-border p-6 bg-slate-900/80 backdrop-blur-sm relative">
+                <div class="absolute -top-3 left-4 bg-slate-900 px-2 text-green-500 font-bold text-sm">
+                    [03] ĐƯỜNG DÂY NÓNG (Tùy chọn)
+                </div>
+                <label for="hoTro" class="block mb-3 text-slate-300">Có <span class="text-yellow-400 font-bold">"cạm bẫy"</span> hay bài toán nào hôm nay vẫn còn làm khó Điệp viên và cần Chỉ huy trưởng gửi thêm tài liệu hỗ trợ không?</label>
+                <textarea id="hoTro" rows="3" class="input-field w-full p-3 font-mono text-sm resize-none" placeholder="> Nhập yêu cầu tiếp viện (hoặc để trống nếu đã clear)..."></textarea>
+            </section>
+
+            <!-- Submit Button -->
+            <div class="text-center">
+                <button id="submitBtn" class="bg-transparent border-2 border-green-500 text-green-500 font-bold py-3 px-12 hover:bg-green-500 hover:text-black transition-all duration-300 shadow-[0_0_10px_rgba(34,197,94,0.3)] hover:shadow-[0_0_20px_rgba(34,197,94,0.6)] flex items-center justify-center gap-3 mx-auto">
+                    <i class="fas fa-paper-plane"></i> MÃ HÓA & GỬI BÁO CÁO
+                </button>
+            </div>
+        </main>
+
+        <!-- Summary Section (Hidden by default) -->
+        <main id="summarySection" class="hidden">
+            <div class="cyber-border p-8 bg-slate-900/90 relative overflow-hidden">
+                <!-- Background Decoration -->
+                <div class="absolute top-0 right-0 opacity-10 text-9xl text-green-500">
+                    <i class="fas fa-fingerprint"></i>
+                </div>
+
+                <div class="text-center mb-8 relative z-10">
+                    <div class="text-green-500 text-6xl mb-4 animate-bounce">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold text-green-400 text-glow">DỮ LIỆU ĐÃ ĐƯỢC CHUYỂN GIAO</h2>
+                    <p class="text-slate-400 mt-2">Hồ sơ chuyên án đã được lưu trữ an toàn vào máy chủ.</p>
+                </div>
+
+                <div class="space-y-6 relative z-10">
+                    <!-- Tóm tắt Hồ sơ -->
+                    <div class="border-l-4 border-green-500 pl-4 bg-slate-800/50 py-3">
+                        <h3 class="text-green-500 font-bold mb-2 flex items-center gap-2">
+                            <i class="fas fa-folder-open"></i> TÓM TẮT HỒ SƠ VỤ ÁN
+                        </h3>
+                        <p class="text-slate-300 text-sm mb-1"><span class="text-slate-500">TRẠNG THÁI:</span> <span id="summaryStatus" class="font-bold"></span></p>
+                        <p class="text-slate-300 text-sm mb-1"><span class="text-slate-500">MẬT MÃ THU THẬP:</span> <span id="summaryThuHoach" class="text-green-300"></span></p>
+                        <p class="text-slate-300 text-sm"><span class="text-slate-500">YÊU CẦU HỖ TRỢ:</span> <span id="summaryHoTro" class="text-yellow-300"></span></p>
+                    </div>
+
+                    <!-- Lời nhắn từ Chỉ huy trưởng -->
+                    <div class="border border-green-700 bg-green-900/20 p-5 relative mt-8">
+                        <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-slate-900 px-3 text-green-400 font-bold text-sm border border-green-700">
+                            TIN NHẮN TỪ CHỈ HUY TRƯỞNG
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="text-4xl text-green-500">
+                                <i class="fas fa-user-tie"></i>
+                            </div>
+                            <div>
+                                <p id="commanderMessage" class="text-slate-200 leading-relaxed italic"></p>
+                                <p class="text-green-500 font-bold text-sm mt-3">- Ký tên: Chỉ huy trưởng - cô Bông -</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-10 relative z-10">
+                    <button onclick="location.reload()" class="text-slate-400 hover:text-green-500 transition-colors text-sm flex items-center justify-center gap-2 mx-auto">
+                        <i class="fas fa-sync-alt"></i> Bắt đầu báo cáo mới
+                    </button>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentStatus = '';
+            const statusButtons = document.querySelectorAll('.status-btn');
+            const submitBtn = document.getElementById('submitBtn');
+            const formSection = document.getElementById('reportForm');
+            const summarySection = document.getElementById('summarySection');
+
+            // Lời nhắn phản hồi tùy theo trạng thái (Áp dụng SEL & Growth Mindset)
+            const messages = {
+                'xuatsac': "Chỉ huy trưởng đã nhận báo cáo! Cô Bông rất vui khi thấy em đã tập trung cao độ và áp dụng các chiến thuật giải mã xuất sắc hôm nay. Những nỗ lực quan sát và suy luận của em đang giúp tư duy toán học bén nhạy hơn từng ngày. Cứ tiếp tục giữ tinh thần say mê khám phá này nhé!",
+                'rasoat': "Tuyệt vời! Việc em nhận ra mình cần thêm thời gian để xâu chuỗi dữ kiện cho thấy em đang học rất sâu. Sự cẩn thận rà soát lại thông tin là kỹ năng cực kỳ quý giá của một điệp viên giỏi. Cứ thong thả gỡ từng nút thắt, cô Bông luôn ở đây nếu em muốn thảo luận thêm.",
+                'nhieusong': "Cô Bông đã ghi nhận tín hiệu của em! Cảm thấy hơi rối trước một 'vụ án' mới là điều hoàn toàn tự nhiên. Thực ra, chính lúc bộ não em đang thấy 'nhức nhối' vì chưa hiểu, là lúc tư duy Toán học của em đang được mở rộng mạnh mẽ nhất đấy. Mình cùng xem lại những mảnh ghép bị thiếu vào ngày mai nhé!",
+                'sos': "Tín hiệu SOS đã được kết nối! Cô Bông rất trân trọng sự dũng cảm và thành thật của em khi chủ động gọi chi viện. Toán học đôi khi giống như một mê cung, tạm thời mất phương hướng không có nghĩa là em không làm được, mà chỉ là chúng ta cần thử một con đường khác. Cô sẽ đồng hành cùng em 'phá án' phần này, yên tâm nhé!"
+            };
+
+            const statusLabels = {
+                'xuatsac': "😎 Điệp viên xuất sắc",
+                'rasoat': "📡 Đang rà soát",
+                'nhieusong': "🧩 Nhiễu sóng",
+                'sos': "🚨 SOS - Yêu cầu chi viện"
+            };
+
+            // Xử lý chọn trạng thái
+            statusButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Xóa class selected khỏi tất cả các nút
+                    statusButtons.forEach(b => {
+                        b.classList.remove('selected');
+                        // Nếu là nút đỏ (SOS)
+                        if(b.dataset.status === 'sos') {
+                           b.classList.remove('bg-red-600', 'text-black', 'border-red-500', 'shadow-[0_0_15px_#dc2626]'); 
+                        }
+                    });
+
+                    // Thêm class selected vào nút được click
+                    this.classList.add('selected');
+                    
+                    // Xử lý riêng cho nút SOS để giữ màu đỏ
+                    if(this.dataset.status === 'sos') {
+                        this.classList.add('bg-red-600', 'text-black', 'border-red-500', 'shadow-[0_0_15px_#dc2626]');
+                    }
+
+                    currentStatus = this.dataset.status;
+                });
+            });
+
+            // Xử lý khi bấm nút Gửi
+            submitBtn.addEventListener('click', () => {
+                const thuHoach = document.getElementById('thuHoach').value.trim();
+                let hoTro = document.getElementById('hoTro').value.trim();
+
+                // Kiểm tra điều kiện
+                if (!currentStatus) {
+                    alert('LỖI HỆ THỐNG: Điệp viên vui lòng chọn [TRẠNG THÁI] trước khi gửi báo cáo!');
+                    return;
+                }
+                if (!thuHoach) {
+                    alert('LỖI HỆ THỐNG: Vali tình báo đang trống! Hãy nhập ít nhất 1 mật mã em thu thập được.');
+                    return;
+                }
+
+                // Xử lý phần hỗ trợ nếu trống
+                if (!hoTro) {
+                    hoTro = "[Không có yêu cầu tiếp viện - Khu vực an toàn]";
+                }
+
+                // Hiển thị hiệu ứng tải (giả lập)
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ĐANG MÃ HÓA...';
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+                setTimeout(() => {
+                    // Cập nhật thông tin vào bảng Tóm tắt
+                    document.getElementById('summaryStatus').textContent = statusLabels[currentStatus];
+                    
+                    // Set màu text cho trạng thái trong bảng tóm tắt
+                    const statusSpan = document.getElementById('summaryStatus');
+                    statusSpan.className = 'font-bold'; // Reset class
+                    if(currentStatus === 'xuatsac') statusSpan.classList.add('text-green-400');
+                    if(currentStatus === 'rasoat') statusSpan.classList.add('text-blue-400');
+                    if(currentStatus === 'nhieusong') statusSpan.classList.add('text-yellow-500');
+                    if(currentStatus === 'sos') statusSpan.classList.add('text-red-500');
+
+                    document.getElementById('summaryThuHoach').textContent = `"${thuHoach}"`;
+                    document.getElementById('summaryHoTro').textContent = hoTro;
+                    document.getElementById('commanderMessage').textContent = messages[currentStatus];
+
+                    // Chuyển đổi giao diện
+                    formSection.classList.add('hidden');
+                    summarySection.classList.remove('hidden');
+                    window.scrollTo(0, 0); // Cuộn lên đầu
+                }, 1000); // Đợi 1 giây để tạo cảm giác "xử lý dữ liệu"
+            });
+        });
+    </script>
+</body>
+</html>
